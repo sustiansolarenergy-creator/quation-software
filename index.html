@@ -1,0 +1,236 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sustain Solar ERP - Mobile Ready</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --primary: #0f172a; --accent: #eab308; }
+        
+        body { 
+            background: url('https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=2072&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-radius: 15px; border: 1px solid rgba(255,255,255,0.3); }
+        
+        /* Mobile Sidebar Fix */
+        .sidebar { background: rgba(15, 23, 42, 0.95); min-height: 100vh; color: white; transition: 0.3s; }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -100%; z-index: 1000; width: 250px; }
+            .sidebar.active { left: 0; }
+            .invoice-box { width: 100% !important; padding: 10px !important; margin: 0 !important; font-size: 12px; }
+            .proposal-page { width: 100% !important; min-height: auto !important; padding: 15px !important; }
+        }
+
+        .nav-link { color: #cbd5e1; padding: 12px; margin: 4px 0; border-radius: 10px; display: flex; align-items: center; }
+        .nav-link:hover, .nav-link.active { background: var(--accent); color: black !important; font-weight: bold; }
+        .nav-link i { margin-right: 10px; }
+
+        .hidden { display: none !important; }
+
+        /* Invoice & Proposal Edits */
+        .invoice-box { width: 210mm; min-height: 297mm; padding: 15mm; margin: auto; background: white; color: #333; }
+        [contenteditable="true"]:hover { background: #fffde7; outline: 1px dashed var(--accent); cursor: text; }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; }
+            .invoice-box { box-shadow: none; width: 100%; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print bg-dark p-2 d-md-none d-flex justify-content-between align-items-center text-white">
+    <h5 class="m-0 text-accent fw-bold">SUSTAIN SOLAR</h5>
+    <button class="btn btn-outline-light border-0" onclick="toggleSidebar()"><i class="bi bi-list fs-3"></i></button>
+</div>
+
+<div id="loginSection" class="container d-flex justify-content-center align-items-center vh-100 no-print">
+    <div class="glass p-4 p-md-5 text-center shadow-lg" style="max-width: 90%; width: 400px;">
+        <h2 class="fw-bold text-dark">SUSTAIN SOLAR</h2>
+        <p class="text-muted mb-4">Invoice & CMS Portal</p>
+        <form id="loginForm">
+            <input type="text" id="u" class="form-control mb-3" placeholder="Admin" value="admin">
+            <input type="password" id="p" class="form-control mb-4" placeholder="Password" value="1234">
+            <button type="submit" class="btn btn-dark w-100 py-2">LOG IN</button>
+        </form>
+    </div>
+</div>
+
+<div id="mainApp" class="hidden">
+    <div class="container-fluid">
+        <div class="row">
+            <div id="sidebar" class="col-md-2 sidebar p-3 no-print">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="text-accent fw-bold m-0">SUSTAIN</h4>
+                    <button class="btn btn-link text-white d-md-none" onclick="toggleSidebar()"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <hr>
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="#" onclick="showPage('listView')"><i class="bi bi-files"></i> Quotations</a>
+                    <a class="nav-link" href="#" onclick="showPage('formView')"><i class="bi bi-plus-square"></i> New Entry</a>
+                    <a class="nav-link text-danger mt-5" href="#" onclick="location.reload()"><i class="bi bi-box-arrow-left"></i> Logout</a>
+                </nav>
+            </div>
+
+            <div class="col-md-10 p-2 p-md-4">
+                <div id="listView" class="glass p-3 p-md-4 shadow">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold m-0">Proposals</h4>
+                        <button class="btn btn-warning btn-sm fw-bold" onclick="showPage('formView')">+ New</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" style="min-width: 600px;">
+                            <thead class="table-light"><tr><th>Ref</th><th>Customer</th><th>Capacity</th><th>Net</th><th>Actions</th></tr></thead>
+                            <tbody id="quoteTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="formView" class="hidden glass p-3 p-md-4 shadow">
+                    <div class="d-flex justify-content-between mb-4">
+                        <h4 id="formTitle">New Entry</h4>
+                        <button class="btn btn-secondary btn-sm" onclick="showPage('listView')">Back</button>
+                    </div>
+                    <form id="proposalForm">
+                        <input type="hidden" id="editIdx">
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="small">Customer Name</label><input type="text" id="cName" class="form-control form-control-sm" required></div>
+                            <div class="col-md-6"><label class="small">Phone</label><input type="text" id="cPhone" class="form-control form-control-sm" required></div>
+                            <div class="col-12"><label class="small">Address</label><input type="text" id="cAddr" class="form-control form-control-sm"></div>
+                            <div class="col-6 col-md-3"><label class="small">Capacity (kW)</label><input type="number" id="sSize" class="form-control form-control-sm" value="3.3"></div>
+                            <div class="col-6 col-md-3"><label class="small">Total Price</label><input type="number" id="fTotal" class="form-control form-control-sm" value="205000"></div>
+                            <div class="col-6 col-md-3"><label class="small">Subsidy</label><input type="number" id="fSub" class="form-control form-control-sm" value="78000"></div>
+                            <div class="col-12 mt-4"><button type="submit" class="btn btn-success w-100">Save Record</button></div>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="invoiceView" class="hidden">
+                    <div class="no-print d-flex justify-content-between mb-3">
+                        <button class="btn btn-secondary btn-sm" onclick="showPage('listView')"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+                    </div>
+                    <div class="invoice-box glass p-3" id="invoiceContent">
+                        <div class="row mb-4">
+                            <div class="col-8"><h4 class="fw-bold text-primary" contenteditable="true">SUSTAIN SOLAR</h4><p class="small" contenteditable="true">GSTIN: 33AAAAA0000A1Z5</p></div>
+                            <div class="col-4 text-end small">Invoice #: <b id="invRef">001</b><br>Date: <span id="invDate"></span></div>
+                        </div>
+                        <div class="mb-4">
+                            <h6 class="small fw-bold">BILL TO:</h6>
+                            <div id="invCustName" class="fw-bold" contenteditable="true">...</div>
+                            <div id="invCustAddr" class="small" contenteditable="true">...</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered small">
+                                <tr class="table-light"><th>Description</th><th class="text-end">Total</th></tr>
+                                <tr>
+                                    <td contenteditable="true"><b>Solar Power System Installation</b><br>On-Grid PMSG Scheme</td>
+                                    <td class="text-end fw-bold" id="invTotal">...</td>
+                                </tr>
+                                <tr class="text-success fw-bold"><td>Less: Govt. Subsidy</td><td class="text-end" id="invSub">...</td></tr>
+                                <tr class="table-dark text-warning fs-6"><td>Net Payable</td><td class="text-end" id="invNet">...</td></tr>
+                            </table>
+                        </div>
+                        <div class="row mt-4 small">
+                            <div class="col-12 bg-light p-2 rounded" contenteditable="true">
+                                <b>Bank Details:</b> HDFC BANK | Acc: 06942320000402 | IFSC: HDFC0000694
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let quotes = JSON.parse(localStorage.getItem('sustain_v3')) || [];
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+
+    document.getElementById('loginForm').onsubmit = (e) => {
+        e.preventDefault();
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        renderTable();
+    };
+
+    function showPage(id) {
+        ['listView', 'formView', 'invoiceView'].forEach(p => document.getElementById(p).classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        if (window.innerWidth < 768) toggleSidebar(); 
+    }
+
+    document.getElementById('proposalForm').onsubmit = (e) => {
+        e.preventDefault();
+        const obj = {
+            ref: 'SSP-' + Math.floor(1000 + Math.random()*9000),
+            name: document.getElementById('cName').value,
+            phone: document.getElementById('cPhone').value,
+            addr: document.getElementById('cAddr').value,
+            size: document.getElementById('sSize').value,
+            total: document.getElementById('fTotal').value,
+            sub: document.getElementById('fSub').value,
+            date: new Date().toLocaleDateString()
+        };
+        const idx = document.getElementById('editIdx').value;
+        if(idx === "") quotes.push(obj); else quotes[idx] = obj;
+        localStorage.setItem('sustain_v3', JSON.stringify(quotes));
+        renderTable();
+        showPage('listView');
+    };
+
+    function renderTable() {
+        const tb = document.getElementById('quoteTable');
+        tb.innerHTML = "";
+        quotes.forEach((q, i) => {
+            tb.innerHTML += `<tr>
+                <td>${q.ref}</td>
+                <td class="small"><b>${q.name}</b></td>
+                <td>${q.size}kW</td>
+                <td>₹${(q.total - q.sub).toLocaleString()}</td>
+                <td class="d-flex gap-1">
+                    <button class="btn btn-sm btn-primary py-0" onclick="viewInvoice(${i})"><i class="bi bi-receipt"></i></button>
+                    <button class="btn btn-sm btn-warning py-0" onclick="editQuote(${i})"><i class="bi bi-pencil"></i></button>
+                </td>
+            </tr>`;
+        });
+    }
+
+    function viewInvoice(i) {
+        const q = quotes[i];
+        document.getElementById('invRef').innerText = q.ref;
+        document.getElementById('invDate').innerText = q.date;
+        document.getElementById('invCustName').innerText = q.name;
+        document.getElementById('invCustAddr').innerText = q.addr;
+        document.getElementById('invTotal').innerText = "₹" + parseFloat(q.total).toLocaleString();
+        document.getElementById('invSub').innerText = "₹" + parseFloat(q.sub).toLocaleString();
+        document.getElementById('invNet').innerText = "₹" + (q.total - q.sub).toLocaleString();
+        showPage('invoiceView');
+    }
+
+    function editQuote(i) {
+        const q = quotes[i];
+        document.getElementById('editIdx').value = i;
+        document.getElementById('cName').value = q.name;
+        document.getElementById('cPhone').value = q.phone;
+        document.getElementById('cAddr').value = q.addr;
+        document.getElementById('sSize').value = q.size;
+        document.getElementById('fTotal').value = q.total;
+        document.getElementById('fSub').value = q.sub;
+        showPage('formView');
+    }
+</script>
+</body>
+</html>
