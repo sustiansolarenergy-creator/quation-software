@@ -3,34 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sustain Solar ERP - Full Update</title>
+    <title>Sustain Solar ERP - Editable GST Labels</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root { --primary: #0f172a; --accent: #eab308; }
-        body { background: #f4f7f6; font-family: 'Inter', sans-serif; min-height: 100vh; }
-        .glass { background: rgba(255, 255, 255, 0.95); border-radius: 15px; border: 1px solid rgba(0,0,0,0.1); }
-        .sidebar { background: #0f172a; min-height: 100vh; color: white; transition: 0.3s; }
-        @media (max-width: 768px) { .sidebar { position: fixed; left: -100%; z-index: 1000; width: 250px; } .sidebar.active { left: 0; } }
-        .nav-link { color: #cbd5e1; padding: 12px; margin: 4px 0; border-radius: 10px; text-decoration: none; display: block; }
+        body { background: #f4f7f6; font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; }
+        .glass { background: white; border-radius: 15px; border: 1px solid rgba(0,0,0,0.1); }
+        .sidebar { background: #0f172a; min-height: 100vh; color: white; transition: 0.3s; z-index: 1050; }
+        @media (max-width: 768px) { 
+            .sidebar { position: fixed; left: -100%; width: 280px; box-shadow: 10px 0 20px rgba(0,0,0,0.2); }
+            .sidebar.active { left: 0; }
+            .main-content { padding-top: 60px !important; }
+        }
+        .mobile-header { display: none; background: #0f172a; color: white; padding: 10px 20px; position: fixed; top: 0; width: 100%; z-index: 1040; }
+        @media (max-width: 768px) { .mobile-header { display: flex; justify-content: space-between; align-items: center; } }
+        .nav-link { color: #cbd5e1; padding: 12px; margin: 4px 0; border-radius: 10px; text-decoration: none; display: flex; align-items: center; }
         .nav-link:hover, .nav-link.active { background: var(--accent); color: black !important; font-weight: bold; }
         .hidden { display: none !important; }
-        .invoice-box { width: 210mm; min-height: 297mm; padding: 12mm; margin: auto; background: white; color: #333; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; }
-        .no-border-input { border: none; background: transparent; text-align: right; width: 60px; font-weight: bold; border-bottom: 1px dashed #ccc; }
-        .editable-label { border-bottom: 1px dashed #ccc; cursor: text; padding: 0 5px; }
-        #logoPreview { max-height: 80px; max-width: 200px; object-fit: contain; }
-        @media print { .no-print { display: none !important; } .invoice-box { box-shadow: none; margin: 0; width: 100%; } body { background: white; } }
+        .invoice-box { width: 100%; max-width: 210mm; min-height: 297mm; padding: 10mm; margin: auto; background: white; color: #333; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        
+        /* Input Styling for Invoice Labels */
+        .label-input { border: none; background: transparent; font-weight: bold; width: 80px; border-bottom: 1px dashed #ccc; text-align: right; color: #555; }
+        .val-input { border: none; background: transparent; font-weight: bold; width: 60px; border-bottom: 1px dashed #ccc; text-align: right; }
+        
+        #logoPreview { max-height: 70px; max-width: 180px; object-fit: contain; margin-bottom: 10px; }
+        @media print { 
+            .no-print { display: none !important; } 
+            .invoice-box { box-shadow: none; margin: 0; width: 100%; padding: 5mm; } 
+            .label-input, .val-input { border: none !important; outline: none; }
+            body { background: white; } 
+        }
     </style>
 </head>
 <body>
 
+<div class="mobile-header no-print">
+    <h5 class="m-0 text-warning fw-bold">SUSTAIN SOLAR</h5>
+    <button class="btn btn-dark border-secondary" onclick="toggleSidebar()"><i class="bi bi-list fs-3"></i></button>
+</div>
+
 <div id="loginSection" class="container d-flex justify-content-center align-items-center vh-100 no-print">
-    <div class="glass p-5 text-center shadow-lg" style="width: 400px;">
+    <div class="glass p-4 p-md-5 text-center shadow-lg" style="width: 100%; max-width: 400px;">
         <h2 class="fw-bold text-dark mb-4">SUSTAIN SOLAR</h2>
         <form id="loginForm">
             <input type="text" id="userInput" class="form-control mb-3" placeholder="Username" value="admin">
             <input type="password" id="passInput" class="form-control mb-4" placeholder="Password" value="1234">
-            <button type="submit" class="btn btn-dark w-100 py-2">LOG IN</button>
+            <button type="submit" class="btn btn-dark w-100 py-2 fw-bold">LOG IN</button>
         </form>
     </div>
 </div>
@@ -38,8 +57,11 @@
 <div id="mainApp" class="hidden">
     <div class="container-fluid">
         <div class="row">
-            <div id="sidebar" class="col-md-2 sidebar p-3 no-print">
-                <h4 class="text-warning fw-bold mb-4">SUSTAIN</h4>
+            <div id="sidebar" class="col-md-3 col-lg-2 sidebar p-3 no-print">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-warning fw-bold m-0">SUSTAIN</h4>
+                    <button class="btn btn-link text-white d-md-none" onclick="toggleSidebar()"><i class="bi bi-x-lg"></i></button>
+                </div>
                 <nav class="nav flex-column">
                     <a class="nav-link active" href="#" onclick="showPage('listView')"><i class="bi bi-files me-2"></i> Quotations</a>
                     <a class="nav-link" href="#" onclick="showPage('formView')"><i class="bi bi-plus-square me-2"></i> New Entry</a>
@@ -51,37 +73,35 @@
                 </nav>
             </div>
 
-            <div class="col-md-10 p-4">
-                <div id="listView" class="glass p-4 shadow">
-                    <div class="d-flex justify-content-between mb-4">
-                        <h4 class="fw-bold m-0">Invoices & Proposals</h4>
-                        <button class="btn btn-warning btn-sm fw-bold" onclick="showPage('formView')">+ New Entry</button>
+            <div class="col-md-9 col-lg-10 p-3 p-md-4 main-content">
+                <div id="listView" class="glass p-3 p-md-4 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold m-0">Records</h4>
+                        <button class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="showPage('formView')">+ New Entry</button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle bg-white rounded">
-                            <thead class="table-light"><tr><th>Ref No</th><th>Customer</th><th>Capacity</th><th>Final Net</th><th>Actions</th></tr></thead>
+                            <thead class="table-light"><tr><th>Ref No</th><th>Customer</th><th>Net Price</th><th>Action</th></tr></thead>
                             <tbody id="quoteTable"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <div id="formView" class="hidden glass p-4 shadow">
-                    <h4 class="fw-bold mb-4">Project & Pricing Details</h4>
+                <div id="formView" class="hidden glass p-3 p-md-4 shadow-sm">
+                    <h4 class="fw-bold mb-4">Project Details</h4>
                     <form id="proposalForm">
                         <div class="row g-3">
-                            <div class="col-md-4"><label class="small fw-bold">Manual Invoice/Ref No</label>
-                                <input type="text" id="manualRef" class="form-control" placeholder="SSP/24-25/001" required>
-                            </div>
+                            <div class="col-md-4"><label class="small fw-bold">Manual Ref No</label><input type="text" id="manualRef" class="form-control" placeholder="SSP/24-25/001" required></div>
                             <div class="col-md-4"><label class="small fw-bold">Customer Name</label><input type="text" id="cName" class="form-control" required></div>
                             <div class="col-md-4"><label class="small fw-bold">Phone</label><input type="text" id="cPhone" class="form-control" required></div>
                             <div class="col-12"><label class="small fw-bold">Address</label><input type="text" id="cAddr" class="form-control"></div>
-                            <div class="col-md-3"><label class="small fw-bold">Capacity (kW)</label><input type="number" id="sSize" class="form-control" value="3.3" step="0.1"></div>
-                            <div class="col-md-3"><label class="small fw-bold">Brand</label><input type="text" id="pBrand" class="form-control" value="Waaree"></div>
-                            <div class="col-md-3"><label class="small fw-bold">System Base Price (₹)</label><input type="number" id="fTotal" class="form-control" value="200000"></div>
-                            <div class="col-md-3"><label class="small fw-bold">Installation Charges (₹)</label><input type="number" id="fInstall" class="form-control" value="0"></div>
+                            <div class="col-6 col-md-3"><label class="small fw-bold">Capacity (kW)</label><input type="number" id="sSize" class="form-control" value="3.3" step="0.1"></div>
+                            <div class="col-6 col-md-3"><label class="small fw-bold">Brand</label><input type="text" id="pBrand" class="form-control" value="Waaree"></div>
+                            <div class="col-6 col-md-3"><label class="small fw-bold">System Price (₹)</label><input type="number" id="fTotal" class="form-control" value="200000"></div>
+                            <div class="col-6 col-md-3"><label class="small fw-bold">Install Charges (₹)</label><input type="number" id="fInstall" class="form-control" value="0"></div>
                             <div class="col-md-6"><label class="small fw-bold">Subsidy (₹)</label><input type="number" id="fSub" class="form-control" value="78000"></div>
-                            <div class="col-12"><label class="small fw-bold">Notes</label><textarea id="pDesc" class="form-control" rows="2"></textarea></div>
-                            <div class="col-12"><button type="submit" class="btn btn-success w-100 fw-bold py-2">SAVE TO LIST</button></div>
+                            <div class="col-12"><label class="small fw-bold">Description / Notes</label><textarea id="pDesc" class="form-control" rows="3" placeholder="Enter specifications..."></textarea></div>
+                            <div class="col-12 mt-4"><button type="submit" class="btn btn-success w-100 fw-bold py-2">SAVE & VIEW INVOICE</button></div>
                         </div>
                     </form>
                 </div>
@@ -89,87 +109,79 @@
                 <div id="invoiceView" class="hidden">
                     <div class="no-print d-flex justify-content-between mb-3">
                         <button class="btn btn-secondary btn-sm" onclick="showPage('listView')"><i class="bi bi-arrow-left"></i> Back</button>
-                        <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print / Save PDF</button>
+                        <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
                     </div>
                     
-                    <div class="invoice-box" id="invoiceContent">
-                        <div class="row mb-4 border-bottom pb-3">
+                    <div class="invoice-box">
+                        <div class="row mb-3 border-bottom pb-3">
                             <div class="col-7">
-                                <div id="logoContainer" class="mb-2">
-                                    <img id="logoPreview" src="" class="hidden" alt="Company Logo">
-                                </div>
-                                <h3 class="fw-bold text-primary mb-0">SUSTAIN SOLAR POWER</h3>
-                                <p class="small mb-0">GSTIN: 33AAAAA0000A1Z5 | sustainsolarpower@gmail.com</p>
+                                <div id="logoContainer"><img id="logoPreview" src="" class="hidden" alt="Logo"></div>
+                                <h4 class="fw-bold text-primary mb-0">SUSTAIN SOLAR POWER</h4>
+                                <p class="small mb-0">GSTIN: 33AAAAA0000A1Z5 | Ph: +91 81225 63474</p>
                             </div>
                             <div class="col-5 text-end small">
-                                <h4 class="fw-bold text-secondary">TAX INVOICE</h4>
-                                <b>Ref No:</b> <span id="invRef" class="fw-bold">...</span><br>
-                                <b>Date:</b> <span id="invDate"></span>
+                                <h5 class="fw-bold text-secondary">TAX INVOICE</h5>
+                                <b>Ref:</b> <span id="invRef">...</span><br><b>Date:</b> <span id="invDate"></span>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <h6 class="fw-bold small border-bottom" style="width: 100px;">BILL TO:</h6>
+                            <h6 class="fw-bold small border-bottom mb-1" style="width: 60px;">BILL TO:</h6>
                             <div id="invCustName" class="fw-bold">...</div>
                             <div id="invCustPhone" class="small">...</div>
                             <div id="invCustAddr" class="small text-muted">...</div>
                         </div>
 
-                        <table class="table table-bordered small mb-3">
-                            <thead class="table-dark"><tr><th>Description</th><th class="text-end" style="width: 150px;">Amount</th></tr></thead>
+                        <table class="table table-bordered small">
+                            <thead class="table-dark"><tr><th>Description of Materials & Services</th><th class="text-end">Amount (₹)</th></tr></thead>
                             <tbody>
                                 <tr>
-                                    <td><b id="invHeader">...</b><br><small id="invFullDesc" class="text-muted"></small></td>
+                                    <td>
+                                        <b id="invHeader">...</b><br>
+                                        <div id="invFullDesc" style="white-space: pre-wrap; margin-top: 5px;" class="text-muted small"></div>
+                                    </td>
                                     <td class="text-end fw-bold" id="invBaseVal">0</td>
                                 </tr>
+                                <tr><td><b>Installation & Commissioning Charges</b></td><td class="text-end fw-bold" id="invInstallVal">0</td></tr>
+                                
                                 <tr>
-                                    <td><b>Installation & Commissioning Charges</b></td>
-                                    <td class="text-end fw-bold" id="invInstallVal">0</td>
+                                    <td class="text-end">
+                                        <input type="text" class="label-input" value="CGST"> (%)
+                                    </td>
+                                    <td class="text-end">
+                                        <input type="number" id="rate1" class="val-input" value="2.5" oninput="calculateGST()">
+                                    </td>
                                 </tr>
                                 <tr>
-                                    <td class="text-end small"><span contenteditable="true" class="editable-label">CGST</span> (%)</td>
-                                    <td class="text-end"><input type="number" id="rate1" class="no-border-input" value="2.5" oninput="calculateGST()"></td>
+                                    <td class="text-end">
+                                        <input type="text" class="label-input" value="SGST"> (%)
+                                    </td>
+                                    <td class="text-end">
+                                        <input type="number" id="rate2" class="val-input" value="2.5" oninput="calculateGST()">
+                                    </td>
                                 </tr>
-                                <tr>
-                                    <td class="text-end small"><span contenteditable="true" class="editable-label">SGST</span> (%)</td>
-                                    <td class="text-end"><input type="number" id="rate2" class="no-border-input" value="2.5" oninput="calculateGST()"></td>
-                                </tr>
-                                <tr class="table-light fw-bold">
-                                    <td class="text-end text-primary">GROSS TOTAL (Base + Inst. + Tax)</td>
-                                    <td class="text-end text-primary" id="invGross">0</td>
-                                </tr>
-                                <tr class="text-success fw-bold">
-                                    <td class="text-end">LESS: GOVT. SUBSIDY</td><td class="text-end" id="invSub">0</td>
-                                </tr>
-                                <tr class="table-secondary fs-6 border-top border-dark">
-                                    <td class="text-end fw-bold">FINAL NET PAYABLE</td><td class="text-end fw-bold" id="invNet">0</td>
-                                </tr>
+
+                                <tr class="table-light fw-bold"><td class="text-end text-primary">GROSS TOTAL</td><td class="text-end text-primary" id="invGross">0</td></tr>
+                                <tr class="text-success fw-bold"><td class="text-end">LESS: SUBSIDY</td><td class="text-end" id="invSub">0</td></tr>
+                                <tr class="table-secondary border-dark fw-bold"><td class="text-end">TOTAL NET PAYABLE</td><td class="text-end" id="invNet">0</td></tr>
                             </tbody>
                         </table>
 
-                        <div class="row mt-4" style="font-size: 10px;">
+                        <div class="row mt-3" style="font-size: 10px;">
                             <div class="col-7 border-end">
-                                <h6 class="fw-bold text-decoration-underline small">Terms and Conditions:</h6>
-                                <ol class="ps-3 mb-2">
-                                    <li>60% advance | 30% on delivery | 10% on completion.</li>
-                                    <li>Area required: 3600 Sq.ft for 36kW system.</li>
+                                <h6 class="fw-bold text-decoration-underline mb-1">Terms:</h6>
+                                <ul class="ps-3 mb-2">
+                                    <li>60% Adv | 30% Delivery | 10% Handover.</li>
                                     <li>Warranty: Panel 30yr Performance, Inverter 10yr.</li>
-                                    <li>Validity: 15 days. Installation within 15 days of order.</li>
-                                </ol>
-                                <h6 class="fw-bold text-decoration-underline small">Services:</h6>
-                                <p class="ps-2">Free maintenance check once every 3 months for the 1st year.</p>
-                            </div>
-                            <div class="col-5 ps-3">
+                                </ul>
                                 <div class="p-2 border rounded bg-light mb-2">
-                                    <h6 class="fw-bold small border-bottom mb-1">BANK DETAILS:</h6>
-                                    <b>HDFC BANK</b> | Acc No: 06942320000402<br>IFSC: HDFC0000694
+                                    <b>BANK: HDFC BANK</b> | Acc No: 06942320000402 | IFSC: HDFC0000694
                                 </div>
-                                <div class="text-center mt-3">
-                                    <p class="mb-3 small fw-bold">For SUSTAIN SOLAR POWER</p>
-                                    <div style="height: 35px;"></div>
-                                    <p class="mb-0 border-top pt-1 small">Authorized Signatory</p>
-                                    <p class="fw-bold small">P. KARTHIK (81225-63474)</p>
-                                </div>
+                            </div>
+                            <div class="col-5 text-center mt-2">
+                                <p class="small fw-bold">For SUSTAIN SOLAR POWER</p>
+                                <div style="height: 30px;"></div>
+                                <p class="mb-0 border-top pt-1 small">Authorized Signatory</p>
                             </div>
                         </div>
                     </div>
@@ -183,40 +195,35 @@
     let quotes = JSON.parse(localStorage.getItem('sustain_v3')) || [];
     let currentBase = 0, currentInstall = 0, currentSub = 0;
 
-    // Logo Handling
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+
     window.onload = () => {
         const savedLogo = localStorage.getItem('sustain_logo');
-        if(savedLogo) {
-            const img = document.getElementById('logoPreview');
-            img.src = savedLogo;
-            img.classList.remove('hidden');
-        }
+        if(savedLogo) { document.getElementById('logoPreview').src = savedLogo; document.getElementById('logoPreview').classList.remove('hidden'); }
     };
 
     function handleLogo(e) {
         const reader = new FileReader();
-        reader.onload = (event) => {
-            localStorage.setItem('sustain_logo', event.target.result);
-            const img = document.getElementById('logoPreview');
-            img.src = event.target.result;
-            img.classList.remove('hidden');
+        reader.onload = (ev) => {
+            localStorage.setItem('sustain_logo', ev.target.result);
+            document.getElementById('logoPreview').src = ev.target.result; document.getElementById('logoPreview').classList.remove('hidden');
         };
         reader.readAsDataURL(e.target.files[0]);
     }
 
-    // Login Logic
     document.getElementById('loginForm').onsubmit = (e) => {
         e.preventDefault();
         if(document.getElementById('userInput').value === 'admin' && document.getElementById('passInput').value === '1234') {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             renderTable();
-        } else { alert('Wrong Credentials!'); }
+        } else { alert('Invalid Login!'); }
     };
 
     function showPage(id) {
         ['listView', 'formView', 'invoiceView'].forEach(p => document.getElementById(p).classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
+        if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('active');
     }
 
     document.getElementById('proposalForm').onsubmit = (e) => {
@@ -225,34 +232,30 @@
             ref: document.getElementById('manualRef').value,
             name: document.getElementById('cName').value, phone: document.getElementById('cPhone').value,
             addr: document.getElementById('cAddr').value, size: document.getElementById('sSize').value,
-            brand: document.getElementById('pBrand').value, 
-            total: document.getElementById('fTotal').value,
-            install: document.getElementById('fInstall').value, // Installation Field
-            sub: document.getElementById('fSub').value, 
-            desc: document.getElementById('pDesc').value,
-            date: new Date().toLocaleDateString()
+            brand: document.getElementById('pBrand').value, total: document.getElementById('fTotal').value,
+            install: document.getElementById('fInstall').value, sub: document.getElementById('fSub').value,
+            desc: document.getElementById('pDesc').value, date: new Date().toLocaleDateString()
         };
         quotes.push(obj);
         localStorage.setItem('sustain_v3', JSON.stringify(quotes));
         renderTable(); showPage('listView');
-        document.getElementById('proposalForm').reset();
     };
 
     function renderTable() {
         const tb = document.getElementById('quoteTable'); tb.innerHTML = "";
         quotes.forEach((q, i) => {
             const final = (parseFloat(q.total) + parseFloat(q.install || 0)) - parseFloat(q.sub);
-            tb.innerHTML += `<tr><td>${q.ref}</td><td><b>${q.name}</b></td><td>${q.size}kW</td><td>₹${final.toLocaleString()}</td>
-            <td><button class="btn btn-sm btn-primary" onclick="viewInvoice(${i})"><i class="bi bi-receipt"></i> View</button></td></tr>`;
+            tb.innerHTML += `<tr><td>${q.ref}</td><td><b>${q.name}</b></td><td>₹${final.toLocaleString()}</td>
+            <td><button class="btn btn-sm btn-outline-primary" onclick="viewInvoice(${i})"><i class="bi bi-eye"></i></button></td></tr>`;
         });
     }
 
     function calculateGST() {
         const r1 = parseFloat(document.getElementById('rate1').value) || 0;
         const r2 = parseFloat(document.getElementById('rate2').value) || 0;
-        const taxableAmt = currentBase + currentInstall;
-        const a1 = (taxableAmt * r1) / 100, a2 = (taxableAmt * r2) / 100;
-        const gross = taxableAmt + a1 + a2;
+        const taxable = currentBase + currentInstall;
+        const tax = (taxable * (r1 + r2)) / 100;
+        const gross = taxable + tax;
         document.getElementById('invBaseVal').innerText = "₹" + currentBase.toLocaleString();
         document.getElementById('invInstallVal').innerText = "₹" + currentInstall.toLocaleString();
         document.getElementById('invGross').innerText = "₹" + gross.toLocaleString();
@@ -261,16 +264,14 @@
 
     function viewInvoice(i) {
         const q = quotes[i]; 
-        currentBase = parseFloat(q.total); 
-        currentInstall = parseFloat(q.install || 0);
-        currentSub = parseFloat(q.sub);
+        currentBase = parseFloat(q.total); currentInstall = parseFloat(q.install || 0); currentSub = parseFloat(q.sub);
         document.getElementById('invRef').innerText = q.ref;
         document.getElementById('invDate').innerText = q.date;
         document.getElementById('invCustName').innerText = q.name;
         document.getElementById('invCustPhone').innerText = "Ph: " + q.phone;
         document.getElementById('invCustAddr').innerText = q.addr;
-        document.getElementById('invHeader').innerText = `${q.size}kW Solar Power System (${q.brand})`;
-        document.getElementById('invFullDesc').innerText = q.desc || "Material supply and technical works.";
+        document.getElementById('invHeader').innerText = `${q.size}kW Solar System (${q.brand})`;
+        document.getElementById('invFullDesc').innerText = q.desc || "";
         document.getElementById('invSub').innerText = "₹" + currentSub.toLocaleString();
         calculateGST(); showPage('invoiceView');
     }
