@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sustain Solar ERP - Logo & Manual Ref</title>
+    <title>Sustain Solar ERP - Full Update</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -19,7 +19,7 @@
         .no-border-input { border: none; background: transparent; text-align: right; width: 60px; font-weight: bold; border-bottom: 1px dashed #ccc; }
         .editable-label { border-bottom: 1px dashed #ccc; cursor: text; padding: 0 5px; }
         #logoPreview { max-height: 80px; max-width: 200px; object-fit: contain; }
-        @media print { .no-print { display: none !important; } .invoice-box { box-shadow: none; margin: 0; width: 100%; } }
+        @media print { .no-print { display: none !important; } .invoice-box { box-shadow: none; margin: 0; width: 100%; } body { background: white; } }
     </style>
 </head>
 <body>
@@ -55,30 +55,31 @@
                 <div id="listView" class="glass p-4 shadow">
                     <div class="d-flex justify-content-between mb-4">
                         <h4 class="fw-bold m-0">Invoices & Proposals</h4>
-                        <button class="btn btn-warning btn-sm fw-bold" onclick="showPage('formView')">+ New Invoice</button>
+                        <button class="btn btn-warning btn-sm fw-bold" onclick="showPage('formView')">+ New Entry</button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle bg-white rounded">
-                            <thead class="table-light"><tr><th>Ref No</th><th>Customer</th><th>Capacity</th><th>Net Price</th><th>Actions</th></tr></thead>
+                            <thead class="table-light"><tr><th>Ref No</th><th>Customer</th><th>Capacity</th><th>Final Net</th><th>Actions</th></tr></thead>
                             <tbody id="quoteTable"></tbody>
                         </table>
                     </div>
                 </div>
 
                 <div id="formView" class="hidden glass p-4 shadow">
-                    <h4 class="fw-bold mb-4">Enter Project Details</h4>
+                    <h4 class="fw-bold mb-4">Project & Pricing Details</h4>
                     <form id="proposalForm">
                         <div class="row g-3">
                             <div class="col-md-4"><label class="small fw-bold">Manual Invoice/Ref No</label>
-                                <input type="text" id="manualRef" class="form-control" placeholder="Ex: SSP/24-25/001" required>
+                                <input type="text" id="manualRef" class="form-control" placeholder="SSP/24-25/001" required>
                             </div>
                             <div class="col-md-4"><label class="small fw-bold">Customer Name</label><input type="text" id="cName" class="form-control" required></div>
                             <div class="col-md-4"><label class="small fw-bold">Phone</label><input type="text" id="cPhone" class="form-control" required></div>
                             <div class="col-12"><label class="small fw-bold">Address</label><input type="text" id="cAddr" class="form-control"></div>
                             <div class="col-md-3"><label class="small fw-bold">Capacity (kW)</label><input type="number" id="sSize" class="form-control" value="3.3" step="0.1"></div>
                             <div class="col-md-3"><label class="small fw-bold">Brand</label><input type="text" id="pBrand" class="form-control" value="Waaree"></div>
-                            <div class="col-md-3"><label class="small fw-bold">Base Price (₹)</label><input type="number" id="fTotal" class="form-control" value="200000"></div>
-                            <div class="col-md-3"><label class="small fw-bold">Subsidy (₹)</label><input type="number" id="fSub" class="form-control" value="78000"></div>
+                            <div class="col-md-3"><label class="small fw-bold">System Base Price (₹)</label><input type="number" id="fTotal" class="form-control" value="200000"></div>
+                            <div class="col-md-3"><label class="small fw-bold">Installation Charges (₹)</label><input type="number" id="fInstall" class="form-control" value="0"></div>
+                            <div class="col-md-6"><label class="small fw-bold">Subsidy (₹)</label><input type="number" id="fSub" class="form-control" value="78000"></div>
                             <div class="col-12"><label class="small fw-bold">Notes</label><textarea id="pDesc" class="form-control" rows="2"></textarea></div>
                             <div class="col-12"><button type="submit" class="btn btn-success w-100 fw-bold py-2">SAVE TO LIST</button></div>
                         </div>
@@ -122,6 +123,10 @@
                                     <td class="text-end fw-bold" id="invBaseVal">0</td>
                                 </tr>
                                 <tr>
+                                    <td><b>Installation & Commissioning Charges</b></td>
+                                    <td class="text-end fw-bold" id="invInstallVal">0</td>
+                                </tr>
+                                <tr>
                                     <td class="text-end small"><span contenteditable="true" class="editable-label">CGST</span> (%)</td>
                                     <td class="text-end"><input type="number" id="rate1" class="no-border-input" value="2.5" oninput="calculateGST()"></td>
                                 </tr>
@@ -130,13 +135,14 @@
                                     <td class="text-end"><input type="number" id="rate2" class="no-border-input" value="2.5" oninput="calculateGST()"></td>
                                 </tr>
                                 <tr class="table-light fw-bold">
-                                    <td class="text-end text-primary">GROSS TOTAL</td><td class="text-end text-primary" id="invGross">0</td>
+                                    <td class="text-end text-primary">GROSS TOTAL (Base + Inst. + Tax)</td>
+                                    <td class="text-end text-primary" id="invGross">0</td>
                                 </tr>
                                 <tr class="text-success fw-bold">
                                     <td class="text-end">LESS: GOVT. SUBSIDY</td><td class="text-end" id="invSub">0</td>
                                 </tr>
                                 <tr class="table-secondary fs-6 border-top border-dark">
-                                    <td class="text-end fw-bold">TOTAL NET PAYABLE</td><td class="text-end fw-bold" id="invNet">0</td>
+                                    <td class="text-end fw-bold">FINAL NET PAYABLE</td><td class="text-end fw-bold" id="invNet">0</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -144,67 +150,14 @@
                         <div class="row mt-4" style="font-size: 10px;">
                             <div class="col-7 border-end">
                                 <h6 class="fw-bold text-decoration-underline small">Terms and Conditions:</h6>
-                                <!-- Payment Terms (Short) -->
-
-
-<!-- Detailed Terms & Conditions -->
-
-<ol class="ps-3">
-    <li>60% advance payment along with Purchase Order. All materials will be delivered at site.</li>
-    <li>30% payment after completion of 70% module installation at roof level.</li>
-    <li>Remaining 10% payment on final project completion.</li>
-    <li>GST is included in the quotation.</li>
-    <li>Area required for 36.27kW system: <strong>3600 Sq.ft</strong>.</li>
-    <li>Once materials are delivered at site, company is not responsible for theft, damage, or breakage before or after installation. Warranty will not be applicable for the same.</li>
-    <li>Any alteration or additional work required will be charged separately.</li>
-    <li>This quotation is without final design; minor changes may occur.</li>
-    <li>Quotation validity: <strong>15 days</strong>.</li>
-</ol>
-
-<!-- Installation -->
-<h5>Installation</h5>
-<ol class="ps-3">
-    <li>Material delivery will be done within 2 weeks after receipt of Purchase Order.</li>
-    <li>Complete installation will be finished within 15 days.</li>
-    <li>Necessary power and water supply must be provided at site by the client.</li>
-    <li>Product brands are as per Annexure-1.</li>
-    <li>Scope of work as per Annexure-2.</li>
-    <li>Return on Investment details as per Annexure-3.</li>
-</ol>
-
-<!-- Warranty -->
-<h5>Warranty</h5>
-<ol class="ps-3">
-    <li>Solar Panel: 12 Years Product Warranty & 30 Years Performance Warranty.</li>
-    <li>Inverter: 10 Years Warranty.</li>
-    <li>Other accessories: 1 Year service support.</li>
-</ol>
-<p><em>*Warranty claims are subject to manufacturer approval only.</em></p>
-
-<!-- TANGEDCO Approval -->
-<h5>TANGEDCO Approval</h5>
-<ol class="ps-3">
-    <li>Net meter work charges are separate.</li>
-    <li>Client shall tie up with a reputed consultant for approvals.</li>
-</ol>
-
-<!-- Services -->
-<h5>Services</h5>
-<ol class="ps-3">
-    <li>System performance checking (Panel string performance, inverter performance, and module cleaning) will be done once every 3 months for free up to 1 year.
-        <br><em>*Consumables will be charged extra.</em>
-    </li>
-    <li>After 1 year, AMC will be required and a separate proposal will be provided.</li>
-</ol>
-
-<!-- Contact -->
-<p>
-    <strong>Mr. P. Karthik</strong><br>
-    Sustain Solar Power<br>
-    📞 +91 81225 63474<br>
-    ✉️ sustainsolarpower@gmail.com
-</p>
-
+                                <ol class="ps-3 mb-2">
+                                    <li>60% advance | 30% on delivery | 10% on completion.</li>
+                                    <li>Area required: 3600 Sq.ft for 36kW system.</li>
+                                    <li>Warranty: Panel 30yr Performance, Inverter 10yr.</li>
+                                    <li>Validity: 15 days. Installation within 15 days of order.</li>
+                                </ol>
+                                <h6 class="fw-bold text-decoration-underline small">Services:</h6>
+                                <p class="ps-2">Free maintenance check once every 3 months for the 1st year.</p>
                             </div>
                             <div class="col-5 ps-3">
                                 <div class="p-2 border rounded bg-light mb-2">
@@ -212,8 +165,8 @@
                                     <b>HDFC BANK</b> | Acc No: 06942320000402<br>IFSC: HDFC0000694
                                 </div>
                                 <div class="text-center mt-3">
-                                    <p class="mb-4 small fw-bold">For SUSTAIN SOLAR POWER</p>
-                                    <div style="height: 30px;"></div>
+                                    <p class="mb-3 small fw-bold">For SUSTAIN SOLAR POWER</p>
+                                    <div style="height: 35px;"></div>
                                     <p class="mb-0 border-top pt-1 small">Authorized Signatory</p>
                                     <p class="fw-bold small">P. KARTHIK (81225-63474)</p>
                                 </div>
@@ -228,7 +181,7 @@
 
 <script>
     let quotes = JSON.parse(localStorage.getItem('sustain_v3')) || [];
-    let currentBase = 0, currentSub = 0;
+    let currentBase = 0, currentInstall = 0, currentSub = 0;
 
     // Logo Handling
     window.onload = () => {
@@ -269,11 +222,14 @@
     document.getElementById('proposalForm').onsubmit = (e) => {
         e.preventDefault();
         const obj = {
-            ref: document.getElementById('manualRef').value, // Manual Ref
+            ref: document.getElementById('manualRef').value,
             name: document.getElementById('cName').value, phone: document.getElementById('cPhone').value,
             addr: document.getElementById('cAddr').value, size: document.getElementById('sSize').value,
-            brand: document.getElementById('pBrand').value, total: document.getElementById('fTotal').value,
-            sub: document.getElementById('fSub').value, desc: document.getElementById('pDesc').value,
+            brand: document.getElementById('pBrand').value, 
+            total: document.getElementById('fTotal').value,
+            install: document.getElementById('fInstall').value, // Installation Field
+            sub: document.getElementById('fSub').value, 
+            desc: document.getElementById('pDesc').value,
             date: new Date().toLocaleDateString()
         };
         quotes.push(obj);
@@ -285,7 +241,8 @@
     function renderTable() {
         const tb = document.getElementById('quoteTable'); tb.innerHTML = "";
         quotes.forEach((q, i) => {
-            tb.innerHTML += `<tr><td>${q.ref}</td><td><b>${q.name}</b></td><td>${q.size}kW</td><td>₹${(q.total - q.sub).toLocaleString()}</td>
+            const final = (parseFloat(q.total) + parseFloat(q.install || 0)) - parseFloat(q.sub);
+            tb.innerHTML += `<tr><td>${q.ref}</td><td><b>${q.name}</b></td><td>${q.size}kW</td><td>₹${final.toLocaleString()}</td>
             <td><button class="btn btn-sm btn-primary" onclick="viewInvoice(${i})"><i class="bi bi-receipt"></i> View</button></td></tr>`;
         });
     }
@@ -293,22 +250,27 @@
     function calculateGST() {
         const r1 = parseFloat(document.getElementById('rate1').value) || 0;
         const r2 = parseFloat(document.getElementById('rate2').value) || 0;
-        const a1 = (currentBase * r1) / 100, a2 = (currentBase * r2) / 100;
-        const gross = currentBase + a1 + a2;
+        const taxableAmt = currentBase + currentInstall;
+        const a1 = (taxableAmt * r1) / 100, a2 = (taxableAmt * r2) / 100;
+        const gross = taxableAmt + a1 + a2;
         document.getElementById('invBaseVal').innerText = "₹" + currentBase.toLocaleString();
+        document.getElementById('invInstallVal').innerText = "₹" + currentInstall.toLocaleString();
         document.getElementById('invGross').innerText = "₹" + gross.toLocaleString();
         document.getElementById('invNet').innerText = "₹" + (gross - currentSub).toLocaleString();
     }
 
     function viewInvoice(i) {
-        const q = quotes[i]; currentBase = parseFloat(q.total); currentSub = parseFloat(q.sub);
+        const q = quotes[i]; 
+        currentBase = parseFloat(q.total); 
+        currentInstall = parseFloat(q.install || 0);
+        currentSub = parseFloat(q.sub);
         document.getElementById('invRef').innerText = q.ref;
         document.getElementById('invDate').innerText = q.date;
         document.getElementById('invCustName').innerText = q.name;
         document.getElementById('invCustPhone').innerText = "Ph: " + q.phone;
         document.getElementById('invCustAddr').innerText = q.addr;
         document.getElementById('invHeader').innerText = `${q.size}kW Solar Power System (${q.brand})`;
-        document.getElementById('invFullDesc').innerText = q.desc || "Installation service.";
+        document.getElementById('invFullDesc').innerText = q.desc || "Material supply and technical works.";
         document.getElementById('invSub').innerText = "₹" + currentSub.toLocaleString();
         calculateGST(); showPage('invoiceView');
     }
