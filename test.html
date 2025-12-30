@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sustain Solar ERP - Final Cloud Sync</title>
+    <title>Sustain Solar ERP - Final Sync</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -25,12 +25,14 @@
         
         .invoice-box { width: 100%; max-width: 210mm; padding: 10mm; margin: auto; background: white; color: #333; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         
-        /* LONG TEXT WRAP FIX */
-        .desc-cell { 
-            max-width: 350px; 
+        /* முக்கியமான திருத்தம்: நீண்ட எழுத்துக்கள் கட்டத்தை விட்டு வெளியே வராது */
+        .desc-cell, #invFullDesc, #invCustAddr { 
+            max-width: 350px !important; 
             word-wrap: break-word !important; 
-            word-break: break-all !important; 
-            white-space: normal !important; 
+            overflow-wrap: break-word !important; 
+            white-space: pre-wrap !important; 
+            line-height: 1.5;
+            vertical-align: top;
         }
 
         .loader {
@@ -68,7 +70,7 @@
 
             <div class="col-md-9 col-lg-10 p-4">
                 <div id="loadingIndicator" class="hidden alert alert-info py-2">
-                    <div class="loader me-2"></div> <b>Syncing with Google Sheets...</b>
+                    <div class="loader me-2"></div> <b>Syncing with Cloud...</b>
                 </div>
 
                 <div id="listView" class="glass p-4 shadow-sm">
@@ -113,7 +115,7 @@
                             
                             <div class="col-12"><label class="small fw-bold">Work Description</label><textarea id="pDesc" class="form-control" rows="2"></textarea></div>
                             <div class="col-12 mt-4">
-                                <button type="submit" id="saveBtn" class="btn btn-success w-100 fw-bold py-2">SAVE TO GOOGLE SHEET</button>
+                                <button type="submit" id="saveBtn" class="btn btn-success w-100 fw-bold py-2">SAVE TO CLOUD</button>
                                 <button type="button" class="btn btn-light w-100 mt-2" onclick="showPage('listView')">CANCEL</button>
                             </div>
                         </div>
@@ -130,21 +132,22 @@
                         <hr>
                         <div class="row mb-3">
                             <div class="col-6">
-                                <b>BILL TO:</b><br><span id="invCustName" class="fw-bold"></span><br><span id="invCustAddr" class="small text-muted"></span>
+                                <b>BILL TO:</b><br><span id="invCustName" class="fw-bold"></span><br>
+                                <div id="invCustAddr" class="small text-muted"></div>
                             </div>
                             <div class="col-6 text-end">
                                 <b>Ref:</b> <span id="invRef"></span><br><b>Date:</b> <span id="invDate"></span>
                             </div>
                         </div>
-                        <table class="table table-bordered small">
+                        <table class="table table-bordered">
                             <thead class="table-dark">
-                                <tr><th>Description</th><th class="text-end" style="width: 150px;">Amount (₹)</th></tr>
+                                <tr><th>Description</th><th class="text-end" style="width: 140px;">Amount (₹)</th></tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td class="desc-cell">
                                         <b id="invHeader"></b><br>
-                                        <small id="invFullDesc" class="text-muted"></small>
+                                        <div id="invFullDesc" class="text-muted small"></div>
                                     </td>
                                     <td class="text-end" id="invBaseVal"></td>
                                 </tr>
@@ -162,8 +165,8 @@
 </div>
 
 <script>
-    // உங்கள் புதிய URL இணைக்கப்பட்டுள்ளது
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTJDb_lxFx-i_GHt3ldBYrncwgjgEe_luKcZbgBve9mB6-WwyMaj3bnnimFpEdonONdQ/exec";
+    // உங்கள் புதிய URL இங்கே இணைக்கப்பட்டுள்ளது
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIdnrjeYGSt3nUIeaMKMpx8m5vLFcCyy2qF8fpNLton7kwVB201dhSXmDgfdfuUHW9Bw/exec";
     let quotes = [];
 
     document.getElementById('loginForm').onsubmit = (e) => {
@@ -182,23 +185,16 @@
 
     function startNewEntry() { document.getElementById('proposalForm').reset(); showPage('formView'); }
 
-    // Cloud-லிருந்து டேட்டாவை எடுக்கும் Function
     async function loadFromCloud() {
         document.getElementById('loadingIndicator').classList.remove('hidden');
         try {
             const response = await fetch(SCRIPT_URL);
-            const data = await response.json();
-            console.log("Raw Data from Sheet:", data);
-            quotes = data;
+            quotes = await response.json();
             renderTable();
-        } catch (e) {
-            console.error("Fetch Error:", e);
-            alert("Could not load data. Check Sheet Headers!");
-        }
+        } catch (e) { console.log(e); }
         document.getElementById('loadingIndicator').classList.add('hidden');
     }
 
-    // சேமிக்கும் Function
     document.getElementById('proposalForm').onsubmit = async (e) => {
         e.preventDefault();
         const btn = document.getElementById('saveBtn');
@@ -222,49 +218,30 @@
         };
 
         try {
-            await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify(obj) 
-            });
-            alert("Saved Successfully! Data will appear in 2 seconds.");
-            setTimeout(loadFromCloud, 2000);
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(obj) });
+            alert("Saved to Cloud!");
+            setTimeout(loadFromCloud, 1500);
             showPage('listView');
-        } catch (e) { alert("Error saving data!"); }
-        btn.disabled = false; btn.innerHTML = "SAVE TO GOOGLE SHEET";
+        } catch (e) { alert("Error!"); }
+        btn.disabled = false; btn.innerHTML = "SAVE TO CLOUD";
     };
 
     function renderTable() {
         const tb = document.getElementById('quoteTable');
         tb.innerHTML = "";
-        
         if(!quotes || quotes.length === 0) {
-            tb.innerHTML = "<tr><td colspan='5' class='text-center'>No data found. Add a new entry!</td></tr>";
+            tb.innerHTML = "<tr><td colspan='5' class='text-center'>No data found.</td></tr>";
             return;
         }
-
         quotes.forEach((q, i) => {
-            // Case-Insensitive Mapping (Sheet-ல் தலைப்பு எப்படி இருந்தாலும் எடுக்கும்)
-            const getVal = (keys) => {
-                for (let k of keys) {
-                    let found = Object.keys(q).find(key => key.toLowerCase().trim() === k.toLowerCase());
-                    if (found) return q[found];
-                }
-                return 'N/A';
-            };
-
-            const ref = getVal(['Ref', 'ref']);
-            const name = getVal(['Customer', 'customer', 'name']);
-            const status = getVal(['Status', 'status']);
-            const base = parseFloat(getVal(['BasePrice', 'baseprice', 'total']) || 0);
-            const inst = parseFloat(getVal(['Installation', 'installation', 'install']) || 0);
-            const sub = parseFloat(getVal(['Subsidy', 'subsidy', 'sub']) || 0);
+            const base = parseFloat(q.BasePrice || 0);
+            const inst = parseFloat(q.Installation || 0);
+            const sub = parseFloat(q.Subsidy || 0);
             const net = (base + inst) - sub;
-
             tb.innerHTML += `<tr>
-                <td>${ref}</td>
-                <td><b>${name}</b></td>
-                <td><span class="badge bg-primary">${status}</span></td>
+                <td>${q.Ref || ''}</td>
+                <td><b>${q.Customer || ''}</b></td>
+                <td><span class="badge bg-primary">${q.Status || ''}</span></td>
                 <td>₹${net.toLocaleString()}</td>
                 <td><button class="btn btn-sm btn-dark" onclick="viewInvoice(${i})">View</button></td>
             </tr>`;
@@ -273,24 +250,16 @@
 
     function viewInvoice(i) {
         const q = quotes[i];
-        const getVal = (keys) => {
-            for (let k of keys) {
-                let found = Object.keys(q).find(key => key.toLowerCase().trim() === k.toLowerCase());
-                if (found) return q[found];
-            }
-            return '';
-        };
-
-        document.getElementById('invRef').innerText = getVal(['Ref']);
-        document.getElementById('invDate').innerText = getVal(['Date']);
-        document.getElementById('invCustName').innerText = getVal(['Customer']);
-        document.getElementById('invCustAddr').innerText = getVal(['Address']);
-        document.getElementById('invHeader').innerText = getVal(['Capacity']) + "kW Solar Power Plant";
-        document.getElementById('invFullDesc').innerText = getVal(['Description']);
+        document.getElementById('invRef').innerText = q.Ref || '';
+        document.getElementById('invDate').innerText = q.Date || '';
+        document.getElementById('invCustName').innerText = q.Customer || '';
+        document.getElementById('invCustAddr').innerText = q.Address || '';
+        document.getElementById('invHeader').innerText = (q.Capacity || '') + "kW Solar Power Plant";
+        document.getElementById('invFullDesc').innerText = q.Description || '';
         
-        const base = parseFloat(getVal(['BasePrice']) || 0);
-        const inst = parseFloat(getVal(['Installation']) || 0);
-        const sub = parseFloat(getVal(['Subsidy']) || 0);
+        const base = parseFloat(q.BasePrice || 0);
+        const inst = parseFloat(q.Installation || 0);
+        const sub = parseFloat(q.Subsidy || 0);
         
         document.getElementById('invBaseVal').innerText = "₹" + base.toLocaleString();
         document.getElementById('invNet').innerText = "₹" + ((base + inst) - sub).toLocaleString();

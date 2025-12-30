@@ -37,13 +37,12 @@
         .label-input { border: none; background: transparent; font-weight: bold; width: 100px; border-bottom: 1px dashed #ccc; }
         .annex-box { border-radius: 8px; border: 1px solid #ddd; background: #fafafa; padding: 10px; height: 100%; }
         
-        /* FIX FOR LONG TEXT - Word Wrap */
-        .desc-cell, #invFullDesc, #invCustAddr {
-            max-width: 350px; 
-            word-wrap: break-word !important; 
-            overflow-wrap: break-word !important;
-            white-space: pre-wrap !important;
-            line-height: 1.5;
+        /* FIX FOR LONG TEXT */
+        .desc-cell {
+            max-width: 350px; /* Limits width */
+            word-wrap: break-word; /* Breaks long words */
+            word-break: break-all; /* Forces break even if no spaces */
+            white-space: normal;
         }
 
         @media print { 
@@ -54,9 +53,6 @@
             .card-section { break-inside: avoid; margin-bottom: 15px; }
             .table-dark { background-color: #000 !important; color: #fff !important; }
         }
-
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -96,11 +92,7 @@
             <div class="col-md-9 col-lg-10 p-3 p-md-4 main-content">
                 
                 <div id="listView" class="glass p-3 p-md-4 shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="fw-bold m-0">Project Tracker</h4>
-                        <button class="btn btn-sm btn-primary" onclick="loadFromCloud()"><i class="bi bi-arrow-clockwise"></i> Refresh Cloud Data</button>
-                    </div>
-                    <div id="syncLoader" class="hidden alert alert-info py-2 small"><div class="loader me-2"></div> Syncing with Google Sheets...</div>
+                    <h4 class="fw-bold mb-4">Project Tracker</h4>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle bg-white rounded">
                             <thead class="table-light"><tr><th>Ref No</th><th>Customer</th><th>Status</th><th>Net Price</th><th>Action</th></tr></thead>
@@ -112,6 +104,7 @@
                 <div id="formView" class="hidden glass p-3 p-md-4 shadow-sm">
                     <h4 id="formTitle" class="fw-bold mb-4 text-primary">Comprehensive Project Entry</h4>
                     <form id="proposalForm">
+                        <input type="hidden" id="editIndex" value="-1">
                         <div class="row g-3">
                             <div class="col-md-3"><label class="small fw-bold">Manual Ref No</label><input type="text" id="manualRef" class="form-control" required></div>
                             <div class="col-md-3"><label class="small fw-bold">Customer Name</label><input type="text" id="cName" class="form-control" required></div>
@@ -139,7 +132,7 @@
                             
                             <div class="col-12"><label class="small fw-bold">Work Description</label><textarea id="pDesc" class="form-control" rows="2"></textarea></div>
                             <div class="col-12 mt-4">
-                                <button type="submit" id="saveBtn" class="btn btn-success w-100 fw-bold py-2 shadow">SAVE TO CLOUD</button>
+                                <button type="submit" id="saveBtn" class="btn btn-success w-100 fw-bold py-2 shadow">SAVE PROJECT</button>
                                 <button type="button" class="btn btn-light w-100 mt-2" onclick="showPage('listView')">CANCEL</button>
                             </div>
                         </div>
@@ -185,7 +178,7 @@
                                 <tr>
                                     <td class="desc-cell">
                                         <b id="invHeader">...</b><br>
-                                        <div id="invFullDesc" class="text-muted small"></div>
+                                        <small id="invFullDesc" class="text-muted"></small>
                                     </td>
                                     <td class="text-end fw-bold" id="invBaseVal">0</td>
                                 </tr>
@@ -256,10 +249,7 @@
 </div>
 
 <script>
-    // உங்கள் புதிய URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIdnrjeYGSt3nUIeaMKMpx8m5vLFcCyy2qF8fpNLton7kwVB201dhSXmDgfdfuUHW9Bw/exec";
-    
-    let quotes = [];
+    let quotes = JSON.parse(localStorage.getItem('sustain_final_db')) || [];
     let currentBase = 0, currentInstall = 0, currentSub = 0;
     let currentQuoteData = null;
 
@@ -271,7 +261,7 @@
             const img = document.getElementById('logoDisp');
             img.src = logo; img.classList.remove('hidden'); 
         }
-        loadFromCloud();
+        renderTable();
     };
 
     function handleLogo(e) {
@@ -295,28 +285,20 @@
     function showPage(id) {
         ['listView', 'formView', 'invoiceView'].forEach(p => document.getElementById(p).classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
-    }
-
-    async function loadFromCloud() {
-        document.getElementById('syncLoader').classList.remove('hidden');
-        try {
-            const res = await fetch(SCRIPT_URL);
-            quotes = await res.json();
-            renderTable();
-        } catch (e) { alert("Load Failed!"); }
-        document.getElementById('syncLoader').classList.add('hidden');
+        if(id === 'listView') renderTable();
     }
 
     function startNewEntry() {
         document.getElementById('proposalForm').reset();
+        document.getElementById('editIndex').value = "-1";
+        document.getElementById('formTitle').innerText = "New Project Entry";
+        document.getElementById('saveBtn').innerText = "SAVE PROJECT";
         showPage('formView');
     }
 
-    document.getElementById('proposalForm').onsubmit = async (e) => {
+    document.getElementById('proposalForm').onsubmit = (e) => {
         e.preventDefault();
-        const btn = document.getElementById('saveBtn');
-        btn.disabled = true; btn.innerHTML = "Saving...";
-        
+        const index = parseInt(document.getElementById('editIndex').value);
         const obj = {
             ref: document.getElementById('manualRef').value,
             name: document.getElementById('cName').value, 
@@ -331,30 +313,54 @@
             install: document.getElementById('fInstall').value,
             sub: document.getElementById('fSub').value, 
             desc: document.getElementById('pDesc').value,
-            date: new Date().toLocaleDateString()
+            date: index === -1 ? new Date().toLocaleDateString() : quotes[index].date
         };
-
-        try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(obj) });
-            alert("Saved to Google Sheets!");
-            loadFromCloud();
-            showPage('listView');
-        } catch (e) { alert("Save Error!"); }
-        btn.disabled = false; btn.innerHTML = "SAVE TO CLOUD";
+        if(index === -1) quotes.push(obj); else quotes[index] = obj;
+        localStorage.setItem('sustain_final_db', JSON.stringify(quotes));
+        showPage('listView');
     };
 
     function renderTable() {
         const tb = document.getElementById('quoteTable'); tb.innerHTML = "";
         quotes.forEach((q, i) => {
-            const final = (parseFloat(q.BasePrice || 0) + parseFloat(q.Installation || 0)) - parseFloat(q.Subsidy || 0);
-            tb.innerHTML += `<tr>
-                <td>${q.Ref || ''}</td>
-                <td><b>${q.Customer || ''}</b></td>
-                <td><span class="badge bg-secondary">${q.Status || ''}</span></td>
-                <td>₹${final.toLocaleString()}</td>
-                <td><button class="btn btn-sm btn-outline-primary" onclick="viewInvoice(${i})"><i class="bi bi-eye"></i> View</button></td>
-            </tr>`;
+            const final = (parseFloat(q.total) + parseFloat(q.install || 0)) - parseFloat(q.sub);
+            tb.innerHTML += `<tr><td>${q.ref}</td><td><b>${q.name}</b></td>
+                <td><span class="badge bg-secondary">${q.status}</span></td><td>₹${final.toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewInvoice(${i})"><i class="bi bi-eye"></i></button>
+                    <button class="btn btn-sm btn-outline-dark" onclick="editQuote(${i})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteQuote(${i})"><i class="bi bi-trash"></i></button>
+                </td></tr>`;
         });
+    }
+
+    function editQuote(i) {
+        const q = quotes[i];
+        document.getElementById('editIndex').value = i;
+        document.getElementById('manualRef').value = q.ref;
+        document.getElementById('cName').value = q.name;
+        document.getElementById('pStatus').value = q.status;
+        document.getElementById('cPhone').value = q.phone;
+        document.getElementById('cAddr').value = q.addr;
+        document.getElementById('pBrand').value = q.panel;
+        document.getElementById('invBrand').value = q.inv;
+        document.getElementById('structType').value = q.struct;
+        document.getElementById('sSize').value = q.size;
+        document.getElementById('fTotal').value = q.total;
+        document.getElementById('fInstall').value = q.install;
+        document.getElementById('fSub').value = q.sub;
+        document.getElementById('pDesc').value = q.desc;
+        document.getElementById('formTitle').innerText = "Edit Project Info";
+        document.getElementById('saveBtn').innerText = "UPDATE PROJECT";
+        showPage('formView');
+    }
+
+    function deleteQuote(i) {
+        if(confirm("நிச்சயமாக டெலிட் செய்ய வேண்டுமா?")) {
+            quotes.splice(i, 1);
+            localStorage.setItem('sustain_final_db', JSON.stringify(quotes));
+            renderTable();
+        }
     }
 
     function calculateGST() {
@@ -377,24 +383,22 @@
     function viewInvoice(i) {
         const q = quotes[i]; 
         currentQuoteData = q;
-        currentBase = parseFloat(q.BasePrice || 0); 
-        currentInstall = parseFloat(q.Installation || 0); 
-        currentSub = parseFloat(q.Subsidy || 0);
+        currentBase = parseFloat(q.total); currentInstall = parseFloat(q.install || 0); currentSub = parseFloat(q.sub);
         
-        document.getElementById('invRef').innerText = q.Ref || '';
-        document.getElementById('invDate').innerText = q.Date || '';
-        document.getElementById('invCustName').innerText = q.Customer || '';
-        document.getElementById('invCustAddr').innerText = q.Address || '';
-        document.getElementById('invStatus').innerText = q.Status || '';
-        document.getElementById('invHeader').innerText = `${q.Capacity || 0}kW Solar Power Plant`;
-        document.getElementById('invFullDesc').innerText = q.Description || "";
+        document.getElementById('invRef').innerText = q.ref;
+        document.getElementById('invDate').innerText = q.date;
+        document.getElementById('invCustName').innerText = q.name;
+        document.getElementById('invCustAddr').innerText = q.addr;
+        document.getElementById('invStatus').innerText = q.status;
+        document.getElementById('invHeader').innerText = `${q.size}kW Solar Power Plant`;
+        document.getElementById('invFullDesc').innerText = q.desc || "";
         document.getElementById('invSub').innerText = "₹" + currentSub.toLocaleString();
         
-        document.getElementById('specPanel').innerText = q.SolarPanel || '';
-        document.getElementById('specInv').innerText = q.Inverter || '';
-        document.getElementById('specStruct').innerText = q.Structure || '';
+        document.getElementById('specPanel').innerText = q.panel;
+        document.getElementById('specInv').innerText = q.inv;
+        document.getElementById('specStruct').innerText = q.struct;
         
-        const units = (parseFloat(q.Capacity) || 0) * 4 * 30;
+        const units = q.size * 4 * 30;
         const monthSave = units * 8;
         document.getElementById('saveUnits').innerText = units.toFixed(0);
         document.getElementById('saveMonth').innerText = monthSave.toLocaleString();
@@ -418,12 +422,15 @@
 
     function sendWhatsApp() {
         if(!currentQuoteData) return;
-        const phone = currentQuoteData.Phone || "";
+        const phone = currentQuoteData.phone || "";
         const netAmt = document.getElementById('invNet').innerText;
-        const ref = currentQuoteData.Ref;
-        const custName = currentQuoteData.Customer;
+        const ref = currentQuoteData.ref;
+        const custName = currentQuoteData.name;
+        
         const text = `Hello ${custName},\n\nHere is your Solar Power Plant Quotation from Sustain Solar.\n\nRef: ${ref}\nTotal Amount: ${netAmt}\n\nPlease find the detailed PDF attached below.`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
     }
 </script>
 </body>
