@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sustain Solar ERP - Google Sheets Cloud</title>
+    <title>Sustain Solar ERP - Final Cloud Sync</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -24,15 +24,19 @@
         .hidden { display: none !important; }
         
         .invoice-box { width: 100%; max-width: 210mm; padding: 10mm; margin: auto; background: white; color: #333; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
-        #logoDisp { max-height: 55px; width: auto; object-fit: contain; margin-bottom: 10px; }
         
-        /* FIX FOR LONG TEXT */
-        .desc-cell { max-width: 350px; word-wrap: break-word; word-break: break-all; white-space: normal; }
+        /* LONG TEXT WRAP FIX */
+        .desc-cell { 
+            max-width: 350px; 
+            word-wrap: break-word !important; 
+            word-break: break-all !important; 
+            white-space: normal !important; 
+        }
 
         .loader {
             border: 4px solid #f3f3f3; border-top: 4px solid var(--accent);
-            border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite;
-            display: inline-block; vertical-align: middle; margin-right: 10px;
+            border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
+            display: inline-block; vertical-align: middle;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -41,7 +45,7 @@
 
 <div id="loginSection" class="container d-flex justify-content-center align-items-center vh-100">
     <div class="glass p-5 text-center shadow-lg" style="max-width: 400px; width: 100%;">
-        <h2 class="fw-bold mb-4">SUSTAIN SOLAR</h2>
+        <h2 class="fw-bold mb-4 text-primary">SUSTAIN SOLAR</h2>
         <form id="loginForm">
             <input type="text" id="userInput" class="form-control mb-3" placeholder="Username" value="admin">
             <input type="password" id="passInput" class="form-control mb-4" placeholder="Password" value="1234">
@@ -63,17 +67,23 @@
             </div>
 
             <div class="col-md-9 col-lg-10 p-4">
-                <div id="loadingIndicator" class="hidden mb-3"><div class="loader"></div> <span class="fw-bold text-primary">Connecting to Google Cloud...</span></div>
+                <div id="loadingIndicator" class="hidden alert alert-info py-2">
+                    <div class="loader me-2"></div> <b>Syncing with Google Sheets...</b>
+                </div>
 
                 <div id="listView" class="glass p-4 shadow-sm">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="fw-bold m-0">Project Tracker (Cloud)</h4>
-                        <button class="btn btn-sm btn-outline-primary" onclick="loadFromCloud()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                        <h4 class="fw-bold m-0">Project Tracker</h4>
+                        <button class="btn btn-sm btn-primary" onclick="loadFromCloud()"><i class="bi bi-arrow-clockwise"></i> Refresh Data</button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
-                            <thead class="table-light"><tr><th>Ref No</th><th>Customer</th><th>Status</th><th>Net Price</th><th>Action</th></tr></thead>
-                            <tbody id="quoteTable"></tbody>
+                            <thead class="table-light">
+                                <tr><th>Ref No</th><th>Customer</th><th>Status</th><th>Net Price</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="quoteTable">
+                                <tr><td colspan="5" class="text-center">Click Refresh to load data...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -85,20 +95,25 @@
                             <div class="col-md-3"><label class="small fw-bold">Ref No</label><input type="text" id="manualRef" class="form-control" required></div>
                             <div class="col-md-3"><label class="small fw-bold">Customer Name</label><input type="text" id="cName" class="form-control" required></div>
                             <div class="col-md-3"><label class="small fw-bold">Status</label>
-                                <select id="pStatus" class="form-select"><option>Quotation</option><option>In Progress</option><option>Completed</option></select>
+                                <select id="pStatus" class="form-select">
+                                    <option>Quotation</option><option>In Progress</option><option>Completed</option>
+                                </select>
                             </div>
                             <div class="col-md-3"><label class="small fw-bold">Phone</label><input type="text" id="cPhone" class="form-control" required></div>
                             <div class="col-12"><label class="small fw-bold">Address</label><input type="text" id="cAddr" class="form-control"></div>
+                            
                             <div class="col-md-4"><label class="small fw-bold">Solar Panel</label><input type="text" id="pBrand" class="form-control" value="Waaree 540Wp Mono PERC"></div>
                             <div class="col-md-4"><label class="small fw-bold">Inverter</label><input type="text" id="invBrand" class="form-control" value="Solis / Growatt"></div>
                             <div class="col-md-4"><label class="small fw-bold">Structure</label><input type="text" id="structType" class="form-control" value="GI Hot Dipped"></div>
+                            
                             <div class="col-md-3"><label class="small fw-bold">Capacity (kW)</label><input type="number" id="sSize" class="form-control" value="3.3" step="0.1"></div>
                             <div class="col-md-3"><label class="small fw-bold">Base Price (₹)</label><input type="number" id="fTotal" class="form-control" value="200000"></div>
                             <div class="col-md-3"><label class="small fw-bold">Installation (₹)</label><input type="number" id="fInstall" class="form-control" value="0"></div>
                             <div class="col-md-3"><label class="small fw-bold">Subsidy (₹)</label><input type="number" id="fSub" class="form-control" value="78000"></div>
+                            
                             <div class="col-12"><label class="small fw-bold">Work Description</label><textarea id="pDesc" class="form-control" rows="2"></textarea></div>
                             <div class="col-12 mt-4">
-                                <button type="submit" id="saveBtn" class="btn btn-success w-100 fw-bold py-2">SAVE TO CLOUD</button>
+                                <button type="submit" id="saveBtn" class="btn btn-success w-100 fw-bold py-2">SAVE TO GOOGLE SHEET</button>
                                 <button type="button" class="btn btn-light w-100 mt-2" onclick="showPage('listView')">CANCEL</button>
                             </div>
                         </div>
@@ -110,30 +125,45 @@
                         <button class="btn btn-secondary btn-sm" onclick="showPage('listView')">Back</button>
                         <button class="btn btn-danger btn-sm" onclick="downloadPDF()">Download PDF</button>
                     </div>
-                    <div class="invoice-box" id="invoiceContent">
+                    <div class="invoice-box shadow" id="invoiceContent">
                         <h4 class="fw-bold text-primary">SUSTAIN SOLAR POWER</h4>
                         <hr>
                         <div class="row mb-3">
-                            <div class="col-6"><b>BILL TO:</b><br><span id="invCustName"></span><br><small id="invCustAddr"></small></div>
-                            <div class="col-6 text-end"><b>Ref:</b> <span id="invRef"></span><br><b>Date:</b> <span id="invDate"></span></div>
+                            <div class="col-6">
+                                <b>BILL TO:</b><br><span id="invCustName" class="fw-bold"></span><br><span id="invCustAddr" class="small text-muted"></span>
+                            </div>
+                            <div class="col-6 text-end">
+                                <b>Ref:</b> <span id="invRef"></span><br><b>Date:</b> <span id="invDate"></span>
+                            </div>
                         </div>
-                        <table class="table table-bordered">
-                            <thead class="table-dark"><tr><th>Description</th><th class="text-end">Amount (₹)</th></tr></thead>
+                        <table class="table table-bordered small">
+                            <thead class="table-dark">
+                                <tr><th>Description</th><th class="text-end" style="width: 150px;">Amount (₹)</th></tr>
+                            </thead>
                             <tbody>
-                                <tr><td class="desc-cell"><b id="invHeader"></b><br><small id="invFullDesc"></small></td><td class="text-end" id="invBaseVal"></td></tr>
-                                <tr class="table-secondary fw-bold"><td>TOTAL NET PAYABLE</td><td class="text-end" id="invNet"></td></tr>
+                                <tr>
+                                    <td class="desc-cell">
+                                        <b id="invHeader"></b><br>
+                                        <small id="invFullDesc" class="text-muted"></small>
+                                    </td>
+                                    <td class="text-end" id="invBaseVal"></td>
+                                </tr>
+                                <tr class="table-secondary fw-bold">
+                                    <td>TOTAL NET PAYABLE</td>
+                                    <td class="text-end" id="invNet"></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxUoKPr2xTSaIvcOYUMlOVUheHGb1jDhA5nZfmDPB_tiwNJYfgYFXvj4ntB6XEbOtI6Lw/exec";
+    // உங்கள் புதிய URL இணைக்கப்பட்டுள்ளது
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTJDb_lxFx-i_GHt3ldBYrncwgjgEe_luKcZbgBve9mB6-WwyMaj3bnnimFpEdonONdQ/exec";
     let quotes = [];
 
     document.getElementById('loginForm').onsubmit = (e) => {
@@ -142,7 +172,7 @@
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             loadFromCloud();
-        }
+        } else alert("Invalid Login!");
     };
 
     function showPage(id) {
@@ -152,16 +182,23 @@
 
     function startNewEntry() { document.getElementById('proposalForm').reset(); showPage('formView'); }
 
+    // Cloud-லிருந்து டேட்டாவை எடுக்கும் Function
     async function loadFromCloud() {
         document.getElementById('loadingIndicator').classList.remove('hidden');
         try {
             const response = await fetch(SCRIPT_URL);
-            quotes = await response.json();
+            const data = await response.json();
+            console.log("Raw Data from Sheet:", data);
+            quotes = data;
             renderTable();
-        } catch (e) { alert("Error loading data!"); }
+        } catch (e) {
+            console.error("Fetch Error:", e);
+            alert("Could not load data. Check Sheet Headers!");
+        }
         document.getElementById('loadingIndicator').classList.add('hidden');
     }
 
+    // சேமிக்கும் Function
     document.getElementById('proposalForm').onsubmit = async (e) => {
         e.preventDefault();
         const btn = document.getElementById('saveBtn');
@@ -185,21 +222,49 @@
         };
 
         try {
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(obj) });
-            alert("Success! Saved to Google Sheet.");
-            loadFromCloud();
+            await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify(obj) 
+            });
+            alert("Saved Successfully! Data will appear in 2 seconds.");
+            setTimeout(loadFromCloud, 2000);
             showPage('listView');
-        } catch (e) { alert("Save failed!"); }
-        btn.disabled = false; btn.innerHTML = "SAVE TO CLOUD";
+        } catch (e) { alert("Error saving data!"); }
+        btn.disabled = false; btn.innerHTML = "SAVE TO GOOGLE SHEET";
     };
 
     function renderTable() {
-        const tb = document.getElementById('quoteTable'); tb.innerHTML = "";
+        const tb = document.getElementById('quoteTable');
+        tb.innerHTML = "";
+        
+        if(!quotes || quotes.length === 0) {
+            tb.innerHTML = "<tr><td colspan='5' class='text-center'>No data found. Add a new entry!</td></tr>";
+            return;
+        }
+
         quotes.forEach((q, i) => {
-            const net = (parseFloat(q.BasePrice) + parseFloat(q.Installation)) - parseFloat(q.Subsidy);
+            // Case-Insensitive Mapping (Sheet-ல் தலைப்பு எப்படி இருந்தாலும் எடுக்கும்)
+            const getVal = (keys) => {
+                for (let k of keys) {
+                    let found = Object.keys(q).find(key => key.toLowerCase().trim() === k.toLowerCase());
+                    if (found) return q[found];
+                }
+                return 'N/A';
+            };
+
+            const ref = getVal(['Ref', 'ref']);
+            const name = getVal(['Customer', 'customer', 'name']);
+            const status = getVal(['Status', 'status']);
+            const base = parseFloat(getVal(['BasePrice', 'baseprice', 'total']) || 0);
+            const inst = parseFloat(getVal(['Installation', 'installation', 'install']) || 0);
+            const sub = parseFloat(getVal(['Subsidy', 'subsidy', 'sub']) || 0);
+            const net = (base + inst) - sub;
+
             tb.innerHTML += `<tr>
-                <td>${q.Ref}</td><td><b>${q.Customer}</b></td>
-                <td><span class="badge bg-primary">${q.Status}</span></td>
+                <td>${ref}</td>
+                <td><b>${name}</b></td>
+                <td><span class="badge bg-primary">${status}</span></td>
                 <td>₹${net.toLocaleString()}</td>
                 <td><button class="btn btn-sm btn-dark" onclick="viewInvoice(${i})">View</button></td>
             </tr>`;
@@ -208,15 +273,27 @@
 
     function viewInvoice(i) {
         const q = quotes[i];
-        document.getElementById('invRef').innerText = q.Ref;
-        document.getElementById('invDate').innerText = q.Date;
-        document.getElementById('invCustName').innerText = q.Customer;
-        document.getElementById('invCustAddr').innerText = q.Address;
-        document.getElementById('invHeader').innerText = q.Capacity + "kW Solar Power Plant";
-        document.getElementById('invFullDesc').innerText = q.Description;
-        document.getElementById('invBaseVal').innerText = "₹" + parseFloat(q.BasePrice).toLocaleString();
-        const net = (parseFloat(q.BasePrice) + parseFloat(q.Installation)) - parseFloat(q.Subsidy);
-        document.getElementById('invNet').innerText = "₹" + net.toLocaleString();
+        const getVal = (keys) => {
+            for (let k of keys) {
+                let found = Object.keys(q).find(key => key.toLowerCase().trim() === k.toLowerCase());
+                if (found) return q[found];
+            }
+            return '';
+        };
+
+        document.getElementById('invRef').innerText = getVal(['Ref']);
+        document.getElementById('invDate').innerText = getVal(['Date']);
+        document.getElementById('invCustName').innerText = getVal(['Customer']);
+        document.getElementById('invCustAddr').innerText = getVal(['Address']);
+        document.getElementById('invHeader').innerText = getVal(['Capacity']) + "kW Solar Power Plant";
+        document.getElementById('invFullDesc').innerText = getVal(['Description']);
+        
+        const base = parseFloat(getVal(['BasePrice']) || 0);
+        const inst = parseFloat(getVal(['Installation']) || 0);
+        const sub = parseFloat(getVal(['Subsidy']) || 0);
+        
+        document.getElementById('invBaseVal').innerText = "₹" + base.toLocaleString();
+        document.getElementById('invNet').innerText = "₹" + ((base + inst) - sub).toLocaleString();
         showPage('invoiceView');
     }
 
