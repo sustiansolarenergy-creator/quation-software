@@ -6,8 +6,6 @@
     <title>Sustain Solar ERP - Final Version</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
     <style>
         :root { --primary: #0f172a; --accent: #eab308; }
         body { background: #f4f7f6; font-family: 'Inter', sans-serif; min-height: 100vh; margin: 0; }
@@ -28,8 +26,8 @@
         
         /* Logo & Invoice Styles */
         .invoice-box { width: 100%; max-width: 210mm; padding: 10mm; margin: auto; background: white; color: #333; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
-        #logoDisp { 
-            max-height: 55px; 
+        #logoDisp, #logoPreview { 
+            max-height: 55px; /* Perfect size for logo */
             width: auto;
             object-fit: contain; 
             margin-bottom: 10px;
@@ -37,14 +35,6 @@
         .label-input { border: none; background: transparent; font-weight: bold; width: 100px; border-bottom: 1px dashed #ccc; }
         .annex-box { border-radius: 8px; border: 1px solid #ddd; background: #fafafa; padding: 10px; height: 100%; }
         
-        /* FIX FOR LONG TEXT */
-        .desc-cell {
-            max-width: 350px; /* Limits width */
-            word-wrap: break-word; /* Breaks long words */
-            word-break: break-all; /* Forces break even if no spaces */
-            white-space: normal;
-        }
-
         @media print { 
             .no-print { display: none !important; } 
             body { background: white; }
@@ -140,14 +130,12 @@
                 </div>
 
                 <div id="invoiceView" class="hidden">
-                    <div class="no-print d-flex gap-2 justify-content-end mb-3 flex-wrap">
+                    <div class="no-print d-flex justify-content-between mb-3">
                         <button class="btn btn-secondary btn-sm" onclick="showPage('listView')"><i class="bi bi-arrow-left"></i> Back</button>
-                        <button class="btn btn-success btn-sm" onclick="sendWhatsApp()"><i class="bi bi-whatsapp"></i> WhatsApp</button>
-                        <button class="btn btn-danger btn-sm" onclick="downloadPDF()"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
-                        <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+                        <button class="btn btn-primary btn-sm" onclick="window.print()"><i class="bi bi-printer"></i> Print / Download</button>
                     </div>
                     
-                    <div class="invoice-box" id="invoiceContent">
+                    <div class="invoice-box">
                         <div class="row mb-3 border-bottom pb-3">
                             <div class="col-7">
                                 <img id="logoDisp" src="" class="hidden" alt="Logo">
@@ -173,15 +161,9 @@
                         </div>
 
                         <table class="table table-bordered small mb-3">
-                            <thead class="table-dark"><tr><th>Description</th><th class="text-end" style="width: 150px;">Amount (₹)</th></tr></thead>
+                            <thead class="table-dark"><tr><th>Description</th><th class="text-end">Amount (₹)</th></tr></thead>
                             <tbody>
-                                <tr>
-                                    <td class="desc-cell">
-                                        <b id="invHeader">...</b><br>
-                                        <small id="invFullDesc" class="text-muted"></small>
-                                    </td>
-                                    <td class="text-end fw-bold" id="invBaseVal">0</td>
-                                </tr>
+                                <tr><td><b id="invHeader">...</b><br><small id="invFullDesc" class="text-muted"></small></td><td class="text-end fw-bold" id="invBaseVal">0</td></tr>
                                 <tr><td><b>Installation & Commissioning</b></td><td class="text-end fw-bold" id="invInstallVal">0</td></tr>
                                 <tr>
                                     <td class="text-end">
@@ -251,7 +233,6 @@
 <script>
     let quotes = JSON.parse(localStorage.getItem('sustain_final_db')) || [];
     let currentBase = 0, currentInstall = 0, currentSub = 0;
-    let currentQuoteData = null;
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
 
@@ -382,7 +363,6 @@
 
     function viewInvoice(i) {
         const q = quotes[i]; 
-        currentQuoteData = q;
         currentBase = parseFloat(q.total); currentInstall = parseFloat(q.install || 0); currentSub = parseFloat(q.sub);
         
         document.getElementById('invRef').innerText = q.ref;
@@ -406,31 +386,6 @@
 
         calculateGST(); 
         showPage('invoiceView');
-    }
-
-    function downloadPDF() {
-        const element = document.getElementById('invoiceContent');
-        const opt = {
-            margin:       0,
-            filename:     'SustainSolar_' + document.getElementById('invRef').innerText + '.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save();
-    }
-
-    function sendWhatsApp() {
-        if(!currentQuoteData) return;
-        const phone = currentQuoteData.phone || "";
-        const netAmt = document.getElementById('invNet').innerText;
-        const ref = currentQuoteData.ref;
-        const custName = currentQuoteData.name;
-        
-        const text = `Hello ${custName},\n\nHere is your Solar Power Plant Quotation from Sustain Solar.\n\nRef: ${ref}\nTotal Amount: ${netAmt}\n\nPlease find the detailed PDF attached below.`;
-        
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-        window.open(url, '_blank');
     }
 </script>
 </body>
