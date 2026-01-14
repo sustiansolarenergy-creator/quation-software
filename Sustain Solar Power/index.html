@@ -1194,6 +1194,224 @@ window.addEventListener("load", function () {
 
 
 
+<section class="py-5 bg-light" id="solar-calculator">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <div class="card shadow border-0 rounded-4 p-4">
+          <h3 class="fw-bold mb-2 text-center">Solar Savings Calculator</h3>
+          <p class="text-muted text-center mb-4">
+            Calculate how much you can save by switching to solar
+          </p>
+
+          <form onsubmit="event.preventDefault(); calculateSolar();">
+
+            <div class="row g-3">
+              <!-- Monthly Bill -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Monthly EB Bill (₹)</label>
+                <input type="number" id="bill" class="form-control form-control-lg"
+                       placeholder="Eg: 3500" required>
+              </div>
+
+              <!-- Location -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Location</label>
+                <select id="location" class="form-select form-select-lg">
+                  <option value="tamilnadu">Tamil Nadu</option>
+                  <option value="karnataka">Karnataka</option>
+                  <option value="kerala">Kerala</option>
+                </select>
+              </div>
+
+              <!-- Roof Size -->
+              <div class="col-12">
+                <label class="form-label fw-semibold">Available Roof Area (sq.ft)</label>
+                <input type="number" id="roof" class="form-control form-control-lg"
+                       placeholder="Eg: 800">
+              </div>
+            </div>
+
+            <button type="submit"
+              class="btn btn-primary w-100 rounded-pill py-3 fw-semibold mt-4">
+              Calculate Savings
+            </button>
+          </form>
+
+          <!-- Result -->
+          <div id="result" class="mt-4 d-none">
+            <hr>
+            <h5 class="fw-bold mb-3">Estimated Benefits</h5>
+
+            <ul class="list-unstyled mb-0">
+              <li>⚡ Recommended System: <strong><span id="system"></span> kW</strong></li>
+              <li>💰 Monthly Savings: <strong>₹<span id="monthly"></span></strong></li>
+              <li>📆 Yearly Savings: <strong>₹<span id="yearly"></span></strong></li>
+              <li>⏱ Payback Period: <strong><span id="payback"></span> years</strong></li>
+            </ul>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+<script>
+function calculateSolar(){
+  const bill = Number(document.getElementById("bill").value);
+  const roof = Number(document.getElementById("roof").value || 800);
+
+  // Rough solar estimation logic
+  const systemKW = Math.min(Math.ceil(bill / 1000), Math.floor(roof / 100));
+  const monthlySaving = Math.round(bill * 0.9);
+  const yearlySaving = monthlySaving * 12;
+  const systemCost = systemKW * 65000;
+  const payback = (systemCost / yearlySaving).toFixed(1);
+
+  document.getElementById("system").innerText = systemKW;
+  document.getElementById("monthly").innerText = monthlySaving;
+  document.getElementById("yearly").innerText = yearlySaving;
+  document.getElementById("payback").innerText = payback;
+
+  document.getElementById("result").classList.remove("d-none");
+}
+</script>
+
+
+
+<section class="py-5" id="installation-process">
+  <div class="container">
+
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Our Solar Installation Process</h2>
+      <p class="text-muted">From site visit to power generation – simple & transparent</p>
+    </div>
+
+    <div class="row g-4">
+
+      <div class="col-md-6 col-lg-3">
+        <div class="text-center p-4 h-100 border rounded-4 shadow-sm">
+          <div class="fs-1 mb-3">🏠</div>
+          <h5 class="fw-semibold">Site Inspection</h5>
+          <p class="text-muted small mb-0">
+            Free rooftop inspection & load analysis by our experts.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="text-center p-4 h-100 border rounded-4 shadow-sm">
+          <div class="fs-1 mb-3">📐</div>
+          <h5 class="fw-semibold">System Design</h5>
+          <p class="text-muted small mb-0">
+            Custom solar system design based on your usage & roof.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="text-center p-4 h-100 border rounded-4 shadow-sm">
+          <div class="fs-1 mb-3">🔧</div>
+          <h5 class="fw-semibold">Installation</h5>
+          <p class="text-muted small mb-0">
+            Professional installation using MNRE approved components.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div class="text-center p-4 h-100 border rounded-4 shadow-sm">
+          <div class="fs-1 mb-3">⚡</div>
+          <h5 class="fw-semibold">Net Meter & Power On</h5>
+          <p class="text-muted small mb-0">
+            Net-metering approval & solar power generation starts.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
+
+
+<style>
+
+#installation-process .border:hover {
+  transform: translateY(-6px);
+  transition: .3s ease;
+}
+</style>
+
+<section class="py-5 bg-light" id="bill-comparison">
+  <div class="container">
+
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Before & After Installing Solar</h2>
+      <p class="text-muted">See how much our customers save every month</p>
+    </div>
+
+    <div class="row align-items-center g-4">
+
+      <!-- BEFORE -->
+      <div class="col-md-6">
+        <div class="card border-0 shadow h-100">
+          <div class="card-body text-center">
+            <h5 class="fw-bold text-danger mb-3">Before Solar</h5>
+            <p class="display-6 fw-bold text-danger">₹4,500</p>
+            <p class="text-muted mb-0">Average monthly EB bill</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AFTER -->
+      <div class="col-md-6">
+        <div class="card border-0 shadow h-100">
+          <div class="card-body text-center">
+            <h5 class="fw-bold text-success mb-3">After Solar</h5>
+            <p class="display-6 fw-bold text-success">₹350</p>
+            <p class="text-muted mb-0">Net EB bill after solar</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SAVINGS -->
+    <div class="row mt-4">
+      <div class="col-12 text-center">
+        <div class="p-4 bg-white shadow rounded-4 d-inline-block">
+          <h5 class="fw-bold mb-1">You Save</h5>
+          <p class="display-6 fw-bold text-primary mb-0">₹4,150 / month</p>
+          <small class="text-muted">₹49,800 per year</small>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<style>
+
+#bill-comparison .card:hover {
+  transform: scale(1.03);
+  transition: 0.3s ease;
+}
+
+</style>
+
+
     <!-- Footer Start -->
     <div class="container-fluid bg-dark text-body footer mt-5 pt-5 wow fadeIn" data-wow-delay="0.1s">
         <div class="container py-5">
