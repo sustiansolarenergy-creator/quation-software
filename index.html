@@ -73,8 +73,13 @@
             <div id="sidebar" class="col-md-3 col-lg-2 sidebar p-3 no-print">
                 <h4 class="text-warning fw-bold mb-4">SUSTAIN</h4>
                 <nav class="nav flex-column">
-                    <a class="nav-link active" onclick="showPage('listView')"><i class="bi bi-files me-2"></i> Quotations</a>
+                    <a class="nav-link active" onclick="showPage('listView')"><i class="bi bi-files me-2"></i> Invoice List</a>
                     <a class="nav-link" onclick="startNewEntry()"><i class="bi bi-plus-square me-2"></i> New Entry</a>
+
+                    <a class="nav-link" onclick="startNewEntry()"><i class="bi bi-plus-square me-2"></i> quartion liist </a>
+                    <a class="nav-link" onclick="startNewEntry()"><i class="bi bi-plus-square me-2"></i> Qution entry </a>
+
+
                     <div class="mt-4 p-2 border border-secondary rounded small">
                         <label class="fw-bold text-warning small mb-1">Company Logo</label>
                         <input type="file" class="form-control form-control-sm bg-dark text-white border-0" onchange="handleLogo(event)">
@@ -452,6 +457,12 @@
         const text = `Hello ${currentQuoteData.Customer},\n\nSolar Quotation Ref: ${currentQuoteData.Ref}\nTotal: ${document.getElementById('invNet').innerText}\nSustain Solar Power.`;
         window.open(`https://wa.me/${currentQuoteData.Phone}?text=${encodeURIComponent(text)}`, '_blank');
     }
+
+
+    window.onbeforeunload = () => "Unsaved changes!";
+
+
+
 </script>
 </body>
 </html>
